@@ -18,15 +18,19 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Shape;
 import java.util.Random;
+import javafx.stage.Screen;
 
 
 public class CombustibleBirds extends Application {
+    int maxCoin = 3;
 
     public static void main(String[] args) {
         launch();
     }
 
     public void start(Stage wnd) {
+        Random r = new Random();
+
         wnd.setTitle("Combustible Birds!");
         double w = 500;
         double h = 500;
@@ -48,7 +52,7 @@ public class CombustibleBirds extends Application {
 
         Pane pane = new Pane();
         pane.getChildren().add(rectangle);
-        pane.getChildren().add(cloud());
+        //pane.getChildren().add(cloud());
 
         Scene scene = new Scene(pane, Color.SKYBLUE);
         wnd.setScene(scene);
@@ -75,7 +79,17 @@ public class CombustibleBirds extends Application {
         wnd.show();
     }
 
-    public static Shape cloud() {
+    /*r.nextDouble(Screen.getPrimary().getBounds().getWidth()), r.nextDouble(Screen.getPrimary().getBounds().getHeight())*/
+
+    public static Circle coin(double x, double y, int maxCoin) {
+        int coinCount = 0;
+        if (!(coinCount == maxCoin)) {
+            Circle coin = new Circle(x,y,25);
+            coinCount++;
+        }
+        return coin;
+    }
+    /*public static Shape[] cloud() {
         Circle baseLeft = new Circle(100, 150, 40);
         Circle topLeft = new Circle(130, 110, 50);
         Circle topRight = new Circle(180, 100, 60);
@@ -87,9 +101,11 @@ public class CombustibleBirds extends Application {
         cloud = Shape.union(cloud, baseRight);
         cloud = Shape.union(cloud, bottomCenter);
 
+        Shape[] clud = new Shape[5];
+
         cloud.setFill(Color.WHITE);
 
-        return cloud;
-    }
+        return clud;
+    }*/
 
 }
