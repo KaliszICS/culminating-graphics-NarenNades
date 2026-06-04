@@ -22,7 +22,7 @@ import javafx.stage.Screen;
 
 
 public class CombustibleBirds extends Application {
-    int maxCoin = 3;
+    //int maxCoin = 3;
 
     public static void main(String[] args) {
         launch();
@@ -54,7 +54,7 @@ public class CombustibleBirds extends Application {
         pane.getChildren().add(rectangle);
         //pane.getChildren().add(cloud());
 
-        Scene scene = new Scene(pane, Color.SKYBLUE);
+        Scene scene = new Scene(pane/*, Color.SKYBLUE*/);
         wnd.setScene(scene);
 
         Robot robot = new Robot();
@@ -64,14 +64,17 @@ public class CombustibleBirds extends Application {
                 double mX = robot.getMouseX() - wnd.getX();
                 double mY = robot.getMouseY() - wnd.getY();
 
-                double dx = mX - w/2;
+                rectangle.setX(mX - 50);
+                rectangle.setY(mY - 60);
+
+                /*double dx = mX - w/2;
                 double dy = mY - h/2;
 
                 double angle = Math.toDegrees(Math.atan2(dy, dx));
 
                 rotate.setPivotX(w/2);
                 rotate.setPivotY(h/2);
-                rotate.setAngle(angle);
+                rotate.setAngle(angle);*/
             }
         };
 
@@ -81,7 +84,7 @@ public class CombustibleBirds extends Application {
 
     /*r.nextDouble(Screen.getPrimary().getBounds().getWidth()), r.nextDouble(Screen.getPrimary().getBounds().getHeight())*/
 
-    public static Circle coin(double x, double y, int maxCoin) {
+    /*public static Circle coin(double x, double y, int maxCoin) {
         int coinCount = 0;
         if (!(coinCount == maxCoin)) {
             Circle coin = new Circle(x,y,25);
