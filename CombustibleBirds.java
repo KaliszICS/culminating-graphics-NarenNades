@@ -19,28 +19,31 @@ import javafx.scene.shape.Circle;
 import javafx.scene.shape.Shape;
 import java.util.Random;
 import javafx.stage.Screen;
+import javafx.scene.shape.Line;
 
 
 public class CombustibleBirds extends Application {
-    //int maxCoin = 3;
+    Random rand = new Random();
+    long timer;
+    double birdCooldown = 5*1e9;
 
     public static void main(String[] args) {
         launch();
     }
 
     public void start(Stage wnd) {
-        Random r = new Random();
-
         wnd.setTitle("Combustible Birds!");
-        double w = 500;
-        double h = 500;
+        double w = 700;
+        double h = 700;
+
+        timer = System.nanoTime();
 
         wnd.setWidth(w);
         wnd.setHeight(h);
 
         Rectangle rectangle = new Rectangle();
-        double wR = 100;
-        double hR = 100;
+        double wR = 50;
+        double hR = 50;
 
         rectangle.setX(w/2 - wR/2);
         rectangle.setY(h/2 - hR/2);
@@ -52,7 +55,6 @@ public class CombustibleBirds extends Application {
 
         Pane pane = new Pane();
         pane.getChildren().add(rectangle);
-        //pane.getChildren().add(cloud());
 
         Scene scene = new Scene(pane/*, Color.SKYBLUE*/);
         wnd.setScene(scene);
@@ -63,9 +65,15 @@ public class CombustibleBirds extends Application {
             public void handle(long now) {
                 double mX = robot.getMouseX() - wnd.getX();
                 double mY = robot.getMouseY() - wnd.getY();
+                Point2D mousePos = new Point2D(mX, mY);
 
-                rectangle.setX(mX - 50);
-                rectangle.setY(mY - 60);
+                rectangle.setX(mX - 25);
+                rectangle.setY(mY - 40);
+
+                if (timer - now >= birdCooldown) {
+                    bird(randScreenPoint(wnd.getX(), wnd.getY(), 75));
+                    timer = now;
+                }
 
                 /*double dx = mX - w/2;
                 double dy = mY - h/2;
@@ -82,33 +90,46 @@ public class CombustibleBirds extends Application {
         wnd.show();
     }
 
-    /*r.nextDouble(Screen.getPrimary().getBounds().getWidth()), r.nextDouble(Screen.getPrimary().getBounds().getHeight())*/
+    public Point2D randScreenPoint(double width, double height, double buffer) {
+        int side = rand.nextInt(4);
+        double x = 0;
+        double y = 0;
 
-    /*public static Circle coin(double x, double y, int maxCoin) {
-        int coinCount = 0;
-        if (!(coinCount == maxCoin)) {
-            Circle coin = new Circle(x,y,25);
-            coinCount++;
+        if (side == 0) {
+            x = rand.nextDouble() * width;
+            y = -buffer;
         }
-        return coin;
+        if (side == 1) {
+            x = rand.nextDouble() * width;
+            y = height + buffer;
+        }
+        if (side == 2) {
+            x = -buffer;
+            y = rand.nextDouble() * height;
+        }
+        if (side == 3) {
+            x = width + buffer;
+            y = rand.nextDouble() * height;
+        }
+        
+        return new Point2D(x, y);
     }
-    /*public static Shape[] cloud() {
-        Circle baseLeft = new Circle(100, 150, 40);
-        Circle topLeft = new Circle(130, 110, 50);
-        Circle topRight = new Circle(180, 100, 60);
-        Circle baseRight = new Circle(230, 140, 45);
-        Circle bottomCenter = new Circle(165, 150, 45);
 
-        Shape cloud = Shape.union(baseLeft, topLeft);
-        cloud = Shape.union(cloud, topRight);
-        cloud = Shape.union(cloud, baseRight);
-        cloud = Shape.union(cloud, bottomCenter);
+    public Circle bird(Point2D spawn, Point2D mousePostion) {
+        Circle bird = new Circle();
+        double rB = 37.5;
 
-        Shape[] clud = new Shape[5];
+        bird.setCenterX(spawn.getX());
+        bird.setCenterY(spawn.getY());
+        bird.setRadius(rB);
 
-        cloud.setFill(Color.WHITE);
+        //double mX = mousePostion.getX();
+        //double mY = mousePostion.getY();
 
-        return clud;
-    }*/
+        double m = (mousePostion.getY() - spawn.getY())/(mousePostion.getX() - spawn.getX());
 
+        //Line line = new Line(spawn.getX(), spawn.getY(), mousePostion.getX(), mousePostion.getY());
+
+        return bird;
+    }
 }
