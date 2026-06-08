@@ -52,6 +52,7 @@ public class CombustibleBirds extends Application {
 
         Rotate rotate = new Rotate();
         rectangle.getTransforms().add(rotate);
+        
 
         Pane pane = new Pane();
         pane.getChildren().add(rectangle);
