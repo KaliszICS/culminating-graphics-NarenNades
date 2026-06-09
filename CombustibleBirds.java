@@ -17,6 +17,7 @@ import javafx.scene.transform.Rotate;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Shape;
+import java.util.ArrayList;
 import java.util.Random;
 import javafx.stage.Screen;
 import javafx.scene.shape.Line;
@@ -26,6 +27,18 @@ public class CombustibleBirds extends Application {
     Random rand = new Random();
     long timer;
     double birdCooldown = 5*1e9;
+    double bird2Cooldown = 10*1e9;
+    Pane pane = new Pane();
+
+    // THREE PARALLEL LISTS: Every bird shares the same index across these lists
+    ArrayList<Circle> birdCircles = new ArrayList<>();
+    ArrayList<Double> birdX = new ArrayList<>();
+    ArrayList<Double> birdY = new ArrayList<>();
+
+    // THREE PARALLEL LISTS: Every bird shares the same index across these lists
+    ArrayList<Circle> bird2Circles = new ArrayList<>();
+    ArrayList<Double> bird2X = new ArrayList<>();
+    ArrayList<Double> bird2Y = new ArrayList<>();
 
     public static void main(String[] args) {
         launch();
@@ -53,8 +66,6 @@ public class CombustibleBirds extends Application {
         Rotate rotate = new Rotate();
         rectangle.getTransforms().add(rotate);
         
-
-        Pane pane = new Pane();
         pane.getChildren().add(rectangle);
 
         Scene scene = new Scene(pane/*, Color.SKYBLUE*/);
@@ -71,19 +82,35 @@ public class CombustibleBirds extends Application {
                 rectangle.setX(mX - 25);
                 rectangle.setY(mY - 40);
 
-                if (timer - now >= birdCooldown) {
-                    bird(randScreenPoint(wnd.getX(), wnd.getY(), 75));
+                if (now - timer >= birdCooldown) {
+                    Point2D spawnPoint = randScreenPoint(wnd.getWidth(), wnd.getHeight(), 75);
+                    spawnBird(spawnPoint, mousePos);
                     timer = now;
                 }
 
-                /*double dx = mX - w/2;
-                double dy = mY - h/2;
+                for (int i = 0; i < birdCircles.size(); i++) {
+                    Circle c = birdCircles.get(i);
+                    double dx = birdX.get(i);
+                    double dy = birdY.get(i);
+                    
+                    // Move the bird by its calculated step direction
+                    c.setCenterX(c.getCenterX() + dx);
+                    c.setCenterY(c.getCenterY() + dy);
 
-                double angle = Math.toDegrees(Math.atan2(dy, dx));
-
-                rotate.setPivotX(w/2);
-                rotate.setPivotY(h/2);
-                rotate.setAngle(angle);*/
+                    // Clean up birds that exit the scene to prevent memory lag
+                    if (c.getCenterX() < -100 || c.getCenterX() > (wnd.getWidth() + 100) || c.getCenterY() < -100 || c.getCenterY() > (wnd.getHeight() + 100)) {
+                        
+                        pane.getChildren().remove(c);
+                        
+                        // Remove from all three lists to keep indices aligned
+                        birdCircles.remove(i);
+                        birdX.remove(i);
+                        birdY.remove(i);
+                        
+                        // Decrease index so we don't skip the next item after removal
+                        i--; 
+                    }
+                }
             }
         };
 
@@ -116,21 +143,30 @@ public class CombustibleBirds extends Application {
         return new Point2D(x, y);
     }
 
-    public Circle bird(Point2D spawn, Point2D mousePostion) {
+    public void spawnBird(Point2D spawn, Point2D targetPosition) {
         Circle bird = new Circle();
         double rB = 37.5;
 
         bird.setCenterX(spawn.getX());
         bird.setCenterY(spawn.getY());
         bird.setRadius(rB);
+        bird.setFill(Color.RED); 
 
-        //double mX = mousePostion.getX();
-        //double mY = mousePostion.getY();
+        pane.getChildren().add(bird);
 
-        double m = (mousePostion.getY() - spawn.getY())/(mousePostion.getX() - spawn.getX());
+        // Calculate direction vector toward the player position at spawn time
+        double mX = targetPosition.getX() - spawn.getX();
+        double mY = targetPosition.getY() - spawn.getY();
+        double distance = Math.sqrt(mX * mX + mY * mY);
 
-        //Line line = new Line(spawn.getX(), spawn.getY(), mousePostion.getX(), mousePostion.getY());
+        // Define movement speed per frame 
+        double maxSpeed = 3;
+        double dx = (mX / distance) * maxSpeed;
+        double dy = (mY / distance) * maxSpeed;
 
-        return bird;
+        // Save attributes to the parallel lists
+        birdCircles.add(bird);
+        birdX.add(dx);
+        birdY.add(dy);
     }
 }
