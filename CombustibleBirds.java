@@ -1,3 +1,11 @@
+/*
+  Author - Naren Nades
+  Date created - June 1st, 2026
+  Date last modified - June 10th 2026
+  File Name - CombustibleBirds.java
+
+*/
+
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -15,6 +23,8 @@ import javafx.animation.AnimationTimer;
 import javafx.scene.robot.Robot;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
+import javafx.scene.image.Image;
+import javafx.scene.paint.ImagePattern;
 
 import java.lang.Math;
 import javafx.scene.transform.Rotate;
@@ -32,17 +42,17 @@ import javafx.scene.shape.Line;
 public class CombustibleBirds extends Application {
     Random rand = new Random();
 
-    long lastBirdSpawnTime;
-    long lastBird2SpawnTime;
-    double birdCooldown = 3*1e9;
-    double bird2Cooldown = 7*1e9;
+    long lastBirdSpawnTime; // the spawntime of the last bird created
+    long lastBird2SpawnTime; // the spawntime of the last bird (the ones chasing user)
+    double birdCooldown = 3*1e9; // this is cooldown between spawning birds
+    double bird2Cooldown = 7*1e9; // this is cooldown between spawning birds (chasing)
 
     Pane pane = new Pane();
     Scene scene;
     AnimationTimer loop;
 
     long gameStartTime;
-    int currentScore = 0;
+    int currentScore = 0; 
     Label scoreLabel = new Label("Score: 0");
 
     Circle coin = new Circle();
@@ -55,11 +65,11 @@ public class CombustibleBirds extends Application {
     ArrayList<Double> birdX = new ArrayList<>();
     ArrayList<Double> birdY = new ArrayList<>();
 
-    // THREE PARALLEL LISTS: Every bird shares the same index across these lists
+    // THREE PARALLEL LISTS: Every bird (chasing) shares the same index across these lists
     ArrayList<Circle> bird2Circles = new ArrayList<>();
     ArrayList<Double> bird2Speeds = new ArrayList<>();
     ArrayList<Long> bird2SpawnTimes = new ArrayList<>(); // Tracks when each bird was born
-    double bird2LifeSpan = 5*1e9;
+    double bird2LifeSpan = 5*1e9; //Lifespan of bird (chasing)
 
     public static void main(String[] args) {
         launch();
@@ -70,8 +80,8 @@ public class CombustibleBirds extends Application {
         double w = 700;
         double h = 700;
 
-        // --- MENU SCREEN SETUP ---
-        VBox menuLayout = new VBox(20); // 20px vertical spacing between elements
+        // Menu
+        VBox menuLayout = new VBox(20);
         menuLayout.setAlignment(Pos.CENTER);
         
         Label titleLabel = new Label("Combustible Birds!");
@@ -83,19 +93,21 @@ public class CombustibleBirds extends Application {
         startButton.setPrefWidth(200);
         startButton.setPrefHeight(50);
 
-        menuLayout.getChildren().addAll(titleLabel, startButton);
+        menuLayout.getChildren().addAll(titleLabel, startButton); // menu
 
-        // Start with the menu screen active
-        scene = new Scene(menuLayout, w, h);
+        scene = new Scene(menuLayout, w, h); // starts the game at the menu
         wnd.setScene(scene);
-
-        //lastBirdSpawnTime = System.nanoTime();
-        //lastBird2SpawnTime = System.nanoTime();
 
         wnd.setWidth(w);
         wnd.setHeight(h);
 
-        Rectangle rectangle = new Rectangle();
+        Rectangle rectangle = new Rectangle(); // player
+        Image Plane = new Image("Plane.png"); // sprite for the player
+
+        ImagePattern imagePatternPlane = new ImagePattern(Plane, 0, 0, 1, 1, true);
+
+        rectangle.setFill(imagePatternPlane);
+
         double wR = 50;
         double hR = 50;
 
@@ -104,9 +116,7 @@ public class CombustibleBirds extends Application {
         rectangle.setWidth(wR);
         rectangle.setHeight(hR);
 
-        Rotate rotate = new Rotate();
-        rectangle.getTransforms().add(rotate);
-
+        // Timer for how long you last
         scoreLabel.setFont(new Font("Arial", 24));
         scoreLabel.setTextFill(Color.BLACK);
         scoreLabel.setLayoutX(20);
@@ -114,6 +124,7 @@ public class CombustibleBirds extends Application {
         
         pane.getChildren().addAll(rectangle, scoreLabel);
 
+        // gameover screen
         VBox gameOverLayout = new VBox(20);
         gameOverLayout.setAlignment(Pos.CENTER);
 
@@ -122,52 +133,52 @@ public class CombustibleBirds extends Application {
         gameOverTitle.setFont(new Font("Arial", 50));
 
         Label finalScoreLabel = new Label("Final Score: 0");
-        finalScoreLabel.setTextFill(Color.YELLOW);
+        finalScoreLabel.setTextFill(Color.GOLD);
         finalScoreLabel.setFont(new Font("Arial", 30));
 
         Button restartButton = new Button("Play Again");
         restartButton.setFont(new Font("Arial", 20));
         restartButton.setPrefSize(200, 50);
 
-        gameOverLayout.getChildren().addAll(gameOverTitle, finalScoreLabel, restartButton);
+        gameOverLayout.getChildren().addAll(gameOverTitle, finalScoreLabel, restartButton); //gameover screen
 
-        //scene = new Scene(pane/*, Color.SKYBLUE*/);
-        //wnd.setScene(scene);
+        Robot robot = new Robot(); // robot used to track cursor
 
-        Robot robot = new Robot();
-
-        loop = new AnimationTimer() {
+        loop = new AnimationTimer() { // main game loop
             public void handle(long now) {
-                currentScore = (int) ((now - gameStartTime)/1e9);
+                currentScore = (int) ((now - gameStartTime)/1e9); // display the time elapsed
                 scoreLabel.setText("Score: " + currentScore);
 
+                //Tracks the cursors postion
                 double mouseX = robot.getMouseX() - wnd.getX();
                 double mouseY = robot.getMouseY() - wnd.getY();
                 Point2D mousePos = new Point2D(mouseX, mouseY);
 
-                rectangle.setX(mouseX - 25);
-                rectangle.setY(mouseY - 40);
+                // sets the player to the cursor
+                rectangle.setX(mouseX - 25); // 25px to the x axis to move the cursor to the middle
+                rectangle.setY(mouseY - 40); // 40px to the y axis to move the cursor to the middle
 
-                if (isCoinOnScreen == false) {
+                if (isCoinOnScreen == false) { //spawns coin on the screen
                     spawnRandomCoin(wnd.getWidth(), wnd.getHeight());
                 }
 
-                // NEW: Use the boolean flag to confirm if the coin can be collected
+                // if the rectangle is collected the coin gets deleted and spawns a new coin
                 if (isCoinOnScreen == true && rectangle.getBoundsInParent().intersects(coin.getBoundsInParent())) {
                     pane.getChildren().remove(coin);
                     isCoinOnScreen = false; // Mark as collected so a new one spawns next frame
                     
-                    countCoin = countCoin + 1;
+                    countCoin = countCoin + 1; // counts the amount of coins collected
                 }
 
-                if (now - lastBirdSpawnTime >= birdCooldown) {
+                // spawn bird
+                if (now - lastBirdSpawnTime >= birdCooldown) { //spawns a bird after cooldown
                     Point2D spawnPoint = randSpawnPoint(wnd.getWidth(), wnd.getHeight(), 75);
                     spawnBird(spawnPoint, mousePos);
                     lastBirdSpawnTime = now;
                 }
 
                  // Spawn chasing bird
-                if (now - lastBird2SpawnTime >= bird2Cooldown) {
+                if (now - lastBird2SpawnTime >= bird2Cooldown) { //spawns a bird (chasing) after cooldown
                     Point2D spawnPoint = randSpawnPoint(wnd.getWidth(), wnd.getHeight(), 75);
                     spawnBird2(spawnPoint, now);
                     lastBird2SpawnTime = now;
@@ -178,32 +189,21 @@ public class CombustibleBirds extends Application {
                     double dx = birdX.get(i);
                     double dy = birdY.get(i);
                     
-                    // Move the bird by its calculated step direction
+                    // Move the bird by its calculated direction
                     bird.setCenterX(bird.getCenterX() + dx);
                     bird.setCenterY(bird.getCenterY() + dy);
 
-                    // Clean up birds that exit the scene to prevent memory lag
-                    if (bird.getBoundsInParent().intersects(rectangle.getBoundsInParent())) {
+                    if (bird.getBoundsInParent().intersects(rectangle.getBoundsInParent())) { // if the player collides with the bird they lose and go to the lose screen
                         finalScoreLabel.setText("Final Score: " + (currentScore + (countCoin*3)));
-                        //scene = new Scene(gameOverLayout/*, Color.SKYBLUE*/);
-                        //wnd.setScene(scene);
                         scene.setRoot(gameOverLayout);
                         countCoin = 0;
                         loop.stop();
-                        
-                        /*pane.getChildren().remove(bird);
-                        
-                        birdCircles.remove(i);
-                        birdX.remove(i);
-                        birdY.remove(i);
-                        
-                        i--; // Adjust index because item was deleted*/
                     }
                     else if (bird.getCenterX() < -100 || bird.getCenterX() > (wnd.getWidth() + 100) || bird.getCenterY() < -100 || bird.getCenterY() > (wnd.getHeight() + 100)) {
-                        
+                        // if the bird moves off screen it deletes itself
                         pane.getChildren().remove(bird);
                         
-                        // Remove from all three lists to keep indices aligned
+                        // Remove the bird from all three lists to keep the arraylist accurate
                         birdCircles.remove(i);
                         birdX.remove(i);
                         birdY.remove(i);
@@ -217,27 +217,21 @@ public class CombustibleBirds extends Application {
                     Circle bird2 = bird2Circles.get(i2);
                     long birthday = bird2SpawnTimes.get(i2);
 
-                    // Check if the bird's time limit has run out
-                    if (now - birthday >= bird2LifeSpan) {
+                    // Check if the bird's (chaser) time limit has run out
+                    if (now - birthday >= bird2LifeSpan) { // the bird (chaser) will remove itself after lifespan 
                         pane.getChildren().remove(bird2);
+
                         bird2Circles.remove(i2);
                         bird2Speeds.remove(i2);
                         bird2SpawnTimes.remove(i2);
+
                         i2--; // Adjust index because item was deleted
                     } else {
-                        if (bird2.getBoundsInParent().intersects(rectangle.getBoundsInParent())) {
+                        if (bird2.getBoundsInParent().intersects(rectangle.getBoundsInParent())) { // if the player collides with the bird (chaser) they lose and go to the lose screen
                             finalScoreLabel.setText("Final Score: " + (currentScore + (countCoin*3)));
-                            //scene = new Scene(gameOverLayout/*, Color.SKYBLUE*/);
-                            //wnd.setScene(scene);
                             scene.setRoot(gameOverLayout);
                             countCoin = 0;
                             loop.stop();
-                            
-                            /*pane.getChildren().remove(bird2);
-                            bird2Circles.remove(i2);
-                            bird2Speeds.remove(i2);
-                            bird2SpawnTimes.remove(i2);
-                            i2--; // Adjust index because item was deleted*/
                         } else {
                             // The bird is still alive, so calculate movement towards player
                         double mX = mousePos.getX() - bird2.getCenterX();
@@ -245,7 +239,7 @@ public class CombustibleBirds extends Application {
                         double distance = Math.sqrt(mX * mX + mY * mY);
 
                         // Prevent dividing by zero if the bird perfectly hits the cursor
-                        if (distance > 0) { //***********************************
+                        if (distance > 0) {
                             double speed = bird2Speeds.get(i2);
                             double stepX = (mX / distance) * speed;
                             double stepY = (mY / distance) * speed;
@@ -259,10 +253,9 @@ public class CombustibleBirds extends Application {
                 }
             }
         };
-        // --- ACTION HANDLER TO SWITCH SCREENS ---
+        // if you click the start or restart button runs the startGame() and the game loop
         startButton.setOnAction(e -> {
             startGame();
-            //wnd.setScene(scene);
             loop.start();
         });
         restartButton.setOnAction(e -> {
@@ -272,7 +265,7 @@ public class CombustibleBirds extends Application {
         wnd.show();
     }
 
-    public void startGame() {
+    public void startGame() { // sets up and prepares to start the game loop
         pane.getChildren().removeAll(birdCircles);
         pane.getChildren().removeAll(bird2Circles);
         birdCircles.clear();
@@ -282,7 +275,6 @@ public class CombustibleBirds extends Application {
         bird2Speeds.clear();
         bird2SpawnTimes.clear();
 
-        //scene = new Scene(pane/*, Color.SKYBLUE*/);
         scene.setRoot(pane);
         
         gameStartTime = System.nanoTime();
@@ -290,7 +282,7 @@ public class CombustibleBirds extends Application {
         lastBird2SpawnTime = System.nanoTime();
     }
 
-    public Point2D randSpawnPoint(double width, double height, double buffer) {
+    public Point2D randSpawnPoint(double width, double height, double buffer) { // picks a random point outside the screen for the birds
         int side = rand.nextInt(4);
         double x = 0;
         double y = 0;
@@ -315,14 +307,14 @@ public class CombustibleBirds extends Application {
         return new Point2D(x, y);
     }
 
-    public Point2D randCoinSpawn(double width, double height) {
+    public Point2D randCoinSpawn(double width, double height) { // picks a random point on screen for the coin
         double x = rand.nextDouble() * width;
         double y = rand.nextDouble() * height;
         
         return new Point2D(x,y);
     }
 
-    public void spawnRandomCoin(double width, double height) {
+    public void spawnRandomCoin(double width, double height) { // spawn the coin
         coin = new Circle();
         coin.setRadius(12.0);
         coin.setFill(Color.GOLD);
@@ -339,18 +331,22 @@ public class CombustibleBirds extends Application {
         isCoinOnScreen = true;
     }
 
-    public void spawnBird(Point2D spawn, Point2D targetPosition) {
+    public void spawnBird(Point2D spawn, Point2D targetPosition) { // spawn the bird
         Circle bird = new Circle();
         double rB = 37.5;
 
         bird.setCenterX(spawn.getX());
         bird.setCenterY(spawn.getY());
         bird.setRadius(rB);
-        bird.setFill(Color.RED); 
+        Image Bird1 = new Image("Bird1.png");
+
+        ImagePattern imagePatternBird1 = new ImagePattern(Bird1, 0, 0, 1, 1, true);
+
+        bird.setFill(imagePatternBird1);
 
         pane.getChildren().add(bird);
 
-        // Calculate direction vector toward the player position at spawn time
+        // Calculate direction toward the player position at spawn time
         double mX = targetPosition.getX() - spawn.getX();
         double mY = targetPosition.getY() - spawn.getY();
         double distance = Math.sqrt(mX * mX + mY * mY);
@@ -366,12 +362,16 @@ public class CombustibleBirds extends Application {
         birdY.add(dy);
     }
 
-    public void spawnBird2(Point2D spawn, long spawnTime) {
+    public void spawnBird2(Point2D spawn, long spawnTime) { // spawn the bird (chaser)
         Circle bird2 = new Circle();
         bird2.setCenterX(spawn.getX());
         bird2.setCenterY(spawn.getY());
         bird2.setRadius(25); 
-        bird2.setFill(Color.ORANGE); 
+        Image Bird2 = new Image("Bird2.png");
+
+        ImagePattern imagePatternBird2 = new ImagePattern(Bird2, 0, 0, 1, 1, true);
+
+        bird2.setFill(imagePatternBird2);
 
         pane.getChildren().add(bird2);
 
